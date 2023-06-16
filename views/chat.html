@@ -1,0 +1,160 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <h1>{{title}}</h1>
+  <button onclick='location.href ="/"'>뒤로가기</button>
+  <fieldset>
+    <legend>채팅 내용</legend>
+    <div id="chat-list">
+      
+      {% for chat in chats %}
+        {% if chat.user == user %}
+          <div class="mine">
+            <div>{{chat.chat}}</div>
+          </div>
+        {% elif chat.user === 'system' %}
+          <div class="system">
+            <div>{{chat.chat}}</div>
+          </div>
+        {% else %}
+          <div class="other">
+            <div>{{chat.user}}</div>
+            <div>{{chat.chat}}</div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </fieldset>
+  <div id="chat-area">
+    <input type="text" id="chat" name="chat">
+    <button onclick="sendChat('{{ room.id }}', '{{ user }}')">전송</button>
+  </div>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io.connect('http://localhost:8005/chat', {
+      path: '/socket.io',
+    });
+    //const socket = io();
+    socket.on('connect', function () {
+        socket.emit('join', '{{ user }}');
+        socket.on('addMessage', function (data) {
+          if (data.name === 'SERVER') {
+              const div = document.createElement('div');
+              div.classList.add('system');
+              document.querySelector('#chat-list').appendChild(div);
+              div.innerHTML = data.message;
+          } else {
+            const div = document.createElement('div');
+            div.classList.add('mine');
+            let div2 = document.createElement('div');
+            div.appendChild(div2)
+            document.querySelector('#chat-list').appendChild(div);
+            div2.innerHTML = data.message;
+          }
+        });
+
+        // 서버로부터 메세지 수신
+        socket.on('news', function (data) {
+            const div = document.createElement('div');
+            div.classList.add('mine');
+            let div2 = document.createElement('div');
+            div.appendChild(div2)
+            document.querySelector('#chat-list').appendChild(div);
+            div2.innerHTML = data.chat;
+        });
+    });
+    
+    
+    
+
+
+    function sendChat(room_id, user){
+      let chat_value = document.getElementById('chat').value;
+      console.log("이름 : ", user)
+      console.log("방id : ",room_id)
+      if (chat_value) {
+        const data = axios.post('/room/' + room_id + '/chat', {
+          chat: this.chat.value,
+          user: user
+        })
+          .then(() => {
+            chat_value = '';
+          })
+          .catch((err) => {
+            console.error(err);
+          });
+          // const div = document.createElement('div');
+          // div.classList.add('mine');
+          // let div2 = document.createElement('div');
+          // div.appendChild(div2)
+          // document.querySelector('#chat-list').appendChild(div);
+          // div2.innerHTML = this.chat.value;
+
+          // 서버에게 메세지 송신
+          socket.emit('reply', {user: user, chat: this.chat.value});
+      }
+      else {
+        alert('메세지를 입력하세요');
+      }
+    }
+    
+    
+    
+
+    //socket.emit('join', new URL(location).pathname.split('/').at(-1));
+    // socket.on('join', function (data) {
+    //   const div = document.createElement('div');
+    //   div.classList.add('system');
+    //   const chat = document.createElement('div');
+    //   chat.textContent = data.chat;
+    //   div.appendChild(chat);
+    //   document.querySelector('#chat-list').appendChild(div);
+    // });
+    // socket.on('exit', function (data) {
+    //   const div = document.createElement('div');
+    //   div.classList.add('system');
+    //   const chat = document.createElement('div');
+    //   chat.textContent = data.chat;
+    //   div.appendChild(chat);
+    //   document.querySelector('#chat-list').appendChild(div);
+    // });
+    // socket.on('chat', function (data) {
+    //   const div = document.createElement('div');
+    //   if (data.user === '{{user}}') {
+    //     div.classList.add('mine');
+    //   } else {
+    //     div.classList.add('other');
+    //   }
+    //   const name = document.createElement('div');
+    //   name.textContent = data.user;
+    //   div.appendChild(name);
+    //   if (data.chat) {
+    //     const chat = document.createElement('div');
+    //     chat.textContent = data.chat;
+    //     div.appendChild(chat);
+    //   } else {
+    //     const gif = document.createElement('img');
+    //     gif.src = '/gif/' + data.gif;
+    //     div.appendChild(gif);
+    //   }
+    //   div.style.color = data.user;
+    //   document.querySelector('#chat-list').appendChild(div);
+    // });
+    // document.querySelector('#chat-form').addEventListener('submit', function (e) {
+    //   e.preventDefault();
+    //   if (e.target.chat.value) {
+    //     axios.post('/room/{{room.id}}/chat', {
+    //       chat: this.chat.value,
+    //     })
+    //       .then(() => {
+    //         e.target.chat.value = '';
+    //       })
+    //       .catch((err) => {
+    //         console.error(err);
+    //       });
+    //   }
+    // });
+    
+  </script>
+{% endblock %}

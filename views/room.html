@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <fieldset>
+    <legend>채팅방 생성</legend>
+    <form action="/room" method="post">
+      <div>
+        <input type="text" name="title" placeholder="방 제목">
+      </div>
+      <div>
+        <input type="number" name="max" placeholder="수용 인원(2 ~ 10명)" min="2" value="10">
+      </div>
+      <div>
+        <button type="submit">생성</button>
+      </div>
+    </form>
+  </fieldset>
+{% endblock %}
